@@ -52,8 +52,6 @@ public final class Teleport implements Loadable, Listener {
             player.removePassenger(entity);
         }
 
-        player.closeInventory();
-
         if (essentials != null) {
             essentials.setBackLocation(player, location);
         }
@@ -83,9 +81,6 @@ public final class Teleport implements Loadable, Listener {
                 Log.warn(this, "Could not teleport " + player.getName() + "! Player is dead or is vehicle");
                 fallbackTeleport(player, location);
             }
-
-        if (!player.teleport(location)) {
-            Log.warn(this, "Could not teleport " + player.getName() + "! Player is dead or is vehicle");
         }
     }
 

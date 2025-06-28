@@ -524,12 +524,12 @@ public class DuelManager implements Loadable {
         @EventHandler
         public void on(final PlayerQuitEvent event) {
             final Player player = event.getPlayer();
+            final ArenaImpl arena = arenaManager.get(player);
 
-            if (!arenaManager.isInMatch(player)) {
+            if (arena == null) {
                 return;
             }
 
-<<<<<<< HEAD
             final DuelMatch match = arena.getMatch();
             if (match == null) {
                 return;
@@ -552,12 +552,6 @@ public class DuelManager implements Loadable {
             } else {
                 arena.endMatch(null, null, Reason.PLUGIN_DISABLE);
             }
-=======
-            player.setHealth(0);
-            player.getInventory().clear();
-            player.getInventory().setArmorContents(null);
-            player.updateInventory();
->>>>>>> 0bf59d29bc4d89e729e7886fa841a87bdf5a30c4
         }
 
         @EventHandler(ignoreCancelled = true)
