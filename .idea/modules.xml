@@ -25,6 +25,8 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/duels-worldguard-v7/com.meteordevelopments.Duels-Optimised.duels-worldguard-v7.test.iml" filepath="$PROJECT_DIR$/.idea/modules/duels-worldguard-v7/com.meteordevelopments.Duels-Optimised.duels-worldguard-v7.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/duels-worldguard/com.meteordevelopments.Duels-Optimised.duels-worldguard.main.iml" filepath="$PROJECT_DIR$/.idea/modules/duels-worldguard/com.meteordevelopments.Duels-Optimised.duels-worldguard.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/duels-worldguard/com.meteordevelopments.Duels-Optimised.duels-worldguard.test.iml" filepath="$PROJECT_DIR$/.idea/modules/duels-worldguard/com.meteordevelopments.Duels-Optimised.duels-worldguard.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/duels-common/duels-common.Duels-Optimised.duels-common.main.iml" filepath="$PROJECT_DIR$/.idea/modules/duels-common/duels-common.Duels-Optimised.duels-common.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/duels-common/duels-common.Duels-Optimised.duels-common.test.iml" filepath="$PROJECT_DIR$/.idea/modules/duels-common/duels-common.Duels-Optimised.duels-common.test.iml" />
     </modules>
   </component>
 </project>

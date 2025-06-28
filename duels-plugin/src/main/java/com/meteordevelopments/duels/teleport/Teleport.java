@@ -14,9 +14,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
-/**
- * Handles force teleporting of players.
- */
 public final class Teleport implements Loadable, Listener {
 
     public static final String METADATA_KEY = "Duels-Teleport";
@@ -33,7 +30,6 @@ public final class Teleport implements Loadable, Listener {
     public void handleLoad() {
         this.essentials = plugin.getHookManager().getHook(EssentialsHook.class);
 
-        // Late-register the listener to override previously registered listeners
         plugin.doSyncAfter(() -> plugin.registerListener(this), 1L);
     }
 
@@ -41,16 +37,14 @@ public final class Teleport implements Loadable, Listener {
     public void handleUnload() {
     }
 
-    /**
-     * Attempts to force-teleport a player by storing a metadata value in the player before teleportation
-     * and uncancelling the teleport by the player in a MONITOR-priority listener if cancelled by other plugins.
-     *
-     * @param player   Player to force-teleport to a location
-     * @param location Location to force-teleport the player
-     */
     public void tryTeleport(final Player player, final Location location) {
         if (location == null || location.getWorld() == null) {
             Log.warn(this, "Could not teleport " + player.getName() + "! Location is null");
+            return;
+        }
+
+        if (!player.isOnline()) {
+            Log.warn(this, "Could not teleport " + player.getName() + "! Player is not online");
             return;
         }
 
@@ -67,25 +61,48 @@ public final class Teleport implements Loadable, Listener {
         boolean isFolia = DuelsPlugin.getMorePaperLib().scheduling().isUsingFolia();
 
         if (isFolia) {
-            player.teleportAsync(location).thenAccept(success -> {
-                if (!success) {
-                    Log.warn(this, "Could not teleport " + player.getName() + "! TeleportAsync failed.");
-                }
-            });
+            try {
+                player.teleportAsync(location).thenAccept(success -> {
+                    if (!success) {
+                        Log.warn(this, "Could not teleport " + player.getName() + "! TeleportAsync failed.");
+                        fallbackTeleport(player, location);
+                    }
+                }).exceptionally(throwable -> {
+                    Log.warn(this, "TeleportAsync error for " + player.getName() + ": " + throwable.getMessage());
+                    fallbackTeleport(player, location);
+                    return null;
+                });
+            } catch (Exception e) {
+                Log.warn(this, "Exception during async teleport for " + player.getName() + ": " + e.getMessage());
+                fallbackTeleport(player, location);
+            }
         } else {
             if (!player.teleport(location)) {
                 Log.warn(this, "Could not teleport " + player.getName() + "! Player is dead or is vehicle");
+                fallbackTeleport(player, location);
             }
         }
     }
 
+    private void fallbackTeleport(final Player player, final Location location) {
+        plugin.doSyncAfter(() -> {
+            if (player.isOnline()) {
+                try {
+                    if (!player.teleport(location)) {
+                        Log.warn(this, "Fallback teleport failed for " + player.getName());
+                    }
+                } catch (Exception e) {
+                    Log.warn(this, "Exception during fallback teleport for " + player.getName() + ": " + e.getMessage());
+                }
+            }
+        }, 1L);
+    }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void on(final PlayerTeleportEvent event) {
         final Player player = event.getPlayer();
         final Object value = MetadataUtil.removeAndGet(plugin, player, METADATA_KEY);
 
-        // Only handle the case where teleport is cancelled and player has force teleport metadata value
         if (!event.isCancelled() || value == null) {
             return;
         }

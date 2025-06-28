@@ -30,15 +30,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Manages:
- * (1) player info cache for restoration after matches.
- * (2) lobby location for teleportation after matches.
- */
 public class PlayerInfoManager implements Loadable {
 
-    private static final String CACHE_FILE_NAME = "player-cache.yml"; // Changed to YAML
-    private static final String LOBBY_FILE_NAME = "lobby.json"; // Assuming you still want to use JSON for lobby
+    private static final String CACHE_FILE_NAME = "player-cache.yml";
+    private static final String LOBBY_FILE_NAME = "lobby.json";
 
     private static final String ERROR_LOBBY_LOAD = "Could not load lobby location!";
     private static final String ERROR_LOBBY_SAVE = "Could not save lobby location!";
@@ -70,11 +65,10 @@ public class PlayerInfoManager implements Loadable {
         this.teleport = plugin.getTeleport();
         this.essentials = plugin.getHookManager().getHook(EssentialsHook.class);
 
-        // Load the player cache from YAML
         if (FileUtil.checkNonEmpty(cacheFile, false)) {
             try (final Reader reader = new InputStreamReader(Files.newInputStream(cacheFile.toPath()), Charsets.UTF_8)) {
                 Yaml yaml = new Yaml();
-                Map<UUID, PlayerData> data = yaml.load(reader); // Cast the loaded data to Map<UUID, PlayerData>
+                Map<UUID, PlayerData> data = yaml.load(reader);
 
                 if (data != null) {
                     for (final Map.Entry<UUID, PlayerData> entry : data.entrySet()) {
@@ -94,7 +88,6 @@ public class PlayerInfoManager implements Loadable {
             }
         }
 
-        // If lobby is not found or invalid, use the default world's spawn location for lobby.
         if (lobby == null || lobby.getWorld() == null) {
             final World world = Bukkit.getWorlds().get(0);
             this.lobby = world.getSpawnLocation();
@@ -119,14 +112,12 @@ public class PlayerInfoManager implements Loadable {
             return;
         }
 
-        // Prepare data for YAML output
         Map<UUID, PlayerData> data = new HashMap<>();
 
         for (final Map.Entry<UUID, PlayerInfo> entry : cache.entrySet()) {
             data.put(entry.getKey(), PlayerData.fromPlayerInfo(entry.getValue()));
         }
 
-        // Write the player cache to YAML
         try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(cacheFile.toPath()), Charsets.UTF_8)) {
             Yaml yaml = new Yaml();
             yaml.dump(data, writer);
@@ -136,12 +127,6 @@ public class PlayerInfoManager implements Loadable {
         cache.clear();
     }
 
-    /**
-     * Sets a lobby location at given player's location.
-     *
-     * @param player Player to get location for lobby
-     * @return true if setting lobby was successful, false otherwise
-     */
     public boolean setLobby(final Player player) {
         final Location lobby = player.getLocation().clone();
 
@@ -156,22 +141,10 @@ public class PlayerInfoManager implements Loadable {
         }
     }
 
-    /**
-     * Gets cached PlayerInfo instance for given player.
-     *
-     * @param player Player to get cached PlayerInfo instance
-     * @return cached PlayerInfo instance or null if not found
-     */
     public PlayerInfo get(final Player player) {
         return cache.get(player.getUniqueId());
     }
 
-    /**
-     * Creates a cached PlayerInfo instance for given player.
-     *
-     * @param player Player to create a cached PlayerInfo instance
-     * @param excludeInventory true to exclude inventory contents from being stored in PlayerInfo, false otherwise
-     */
     public void create(final Player player, final boolean excludeInventory) {
         final PlayerInfo info = new PlayerInfo(player, excludeInventory);
 
@@ -182,28 +155,16 @@ public class PlayerInfoManager implements Loadable {
         cache.put(player.getUniqueId(), info);
     }
 
-    /**
-     * Calls {@link #create(Player, boolean)} with excludeInventory defaulting to false.
-     *
-     * @see {@link #create(Player, boolean)}
-     */
     public void create(final Player player) {
         create(player, false);
     }
 
-    /**
-     * Removes the given player from cache.
-     *
-     * @param player Player to remove from cache
-     * @return Removed PlayerInfo instance or null if not found
-     */
     public PlayerInfo remove(final Player player) {
         return cache.remove(player.getUniqueId());
     }
 
     private class PlayerInfoListener implements Listener {
 
-        // Handles case of some players causing respawn to skip somehow.
         @EventHandler(priority = EventPriority.HIGHEST)
         public void on(final PlayerJoinEvent event) {
             final Player player = event.getPlayer();
@@ -218,8 +179,16 @@ public class PlayerInfoManager implements Loadable {
                 return;
             }
 
-            teleport.tryTeleport(player, info.getLocation());
-            info.restore(player);
+            plugin.doSyncAfter(() -> {
+                if (player.isOnline()) {
+                    teleport.tryTeleport(player, info.getLocation());
+                    DuelsPlugin.getMorePaperLib().scheduling().entitySpecificScheduler(player).runDelayed(() -> {
+                        if (player.isOnline()) {
+                            info.restore(player);
+                        }
+                    }, null, 5L);
+                }
+            }, 5L);
         }
 
         @EventHandler(priority = EventPriority.HIGHEST)
@@ -238,13 +207,16 @@ public class PlayerInfoManager implements Loadable {
             }
 
             plugin.doSyncAfter(() -> {
-                // Do not remove cached data if player left while respawning.
                 if (!player.isOnline()) {
                     return;
                 }
 
                 remove(player);
-                DuelsPlugin.getMorePaperLib().scheduling().entitySpecificScheduler(player).run(() -> info.restore(player), null);
+                DuelsPlugin.getMorePaperLib().scheduling().entitySpecificScheduler(player).run(() -> {
+                    if (player.isOnline()) {
+                        info.restore(player);
+                    }
+                }, null);
             }, 1L);
         }
     }

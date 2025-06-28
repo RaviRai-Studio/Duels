@@ -247,7 +247,7 @@ COMMAND:
           - '&7Kit: &3%kit%'
           - '&7Duration: &a%duration%'
           - '&7Time: &f%time% ago'
-          - '&7Health: &d%health%‚ù§'
+          - '&7Health: &d%health%‚?§'
         footer: '{LINE}'
     toggle:
       enabled: '{PREFIX} &aYou are now receiving duel requests.'
@@ -481,9 +481,9 @@ DUEL:
     command: '&cYou cannot use ''%command%'' while in a duel.'
     teleportation: '&cYou cannot teleport while in a duel.'
     inventory-open: '&cYou cannot open inventories while in a duel.'
-  projectile-hit-message: '{PREFIX} &f%name% &7is now at &d%health%‚ù§&7!'
+  projectile-hit-message: '{PREFIX} &f%name% &7is now at &d%health%‚?§&7!'
   on-death:
-    with-killer: '{PREFIX} &a%killer% &7has slain &c%name% &7with &d%health%‚ù§&7.'
+    with-killer: '{PREFIX} &a%killer% &7has slain &c%name% &7with &d%health%‚?§&7.'
     no-killer: '{PREFIX} &c%name% &7died.'
   on-end:
     tie: '{PREFIX} &7Tie Game!'
@@ -663,7 +663,7 @@ GUI:
       hunger:
         name: '&6%hunger% bars'
       health:
-        name: '&c%health% ‚ù§'
+        name: '&c%health% ‚?§'
   options:
     title: 'Kit: %kit%'
     buttons:
