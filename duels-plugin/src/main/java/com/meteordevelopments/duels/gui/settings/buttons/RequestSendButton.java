@@ -52,4 +52,8 @@ public class RequestSendButton extends BaseButton {
         player.closeInventory();
         requestManager.send(player, target, settings);
     }
+
+    public void sendDirectRequest(final Player player) {
+        onClick(player);
+    }
 }

@@ -16,7 +16,6 @@ import com.meteordevelopments.duels.util.Loadable;
 import com.meteordevelopments.duels.util.Log;
 import com.meteordevelopments.duels.util.StringUtil;
 import com.meteordevelopments.duels.util.compat.Items;
-import com.meteordevelopments.duels.util.gui.MultiPageGui;
 import com.meteordevelopments.duels.util.inventory.ItemBuilder;
 import com.meteordevelopments.duels.util.io.FileUtil;
 import com.meteordevelopments.duels.util.json.JsonUtil;
@@ -24,6 +23,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,6 @@ import java.util.*;
 public class KitManagerImpl implements Loadable, KitManager {
 
     private static final String FILE_NAME = "kits.json";
-
     private static final String ERROR_NOT_ALPHANUMERIC = "&c&lCould not load kit %s: Name is not alphanumeric.";
     private static final String KITS_LOADED = "&2Loaded %s kit(s).";
 
@@ -45,7 +44,7 @@ public class KitManagerImpl implements Loadable, KitManager {
     private final Map<String, KitImpl> kits = new LinkedHashMap<>();
 
     @Getter
-    private MultiPageGui<DuelsPlugin> gui;
+    private CustomKitGui gui;
 
     public KitManagerImpl(final DuelsPlugin plugin) {
         this.plugin = plugin;
@@ -56,11 +55,8 @@ public class KitManagerImpl implements Loadable, KitManager {
 
     @Override
     public void handleLoad() throws IOException {
-        gui = new MultiPageGui<>(plugin, lang.getMessage("GUI.kit-selector.title"), config.getKitSelectorRows(), kits.values());
-        gui.setSpaceFiller(Items.from(config.getKitSelectorFillerType(), config.getKitSelectorFillerData()));
-        gui.setPrevButton(ItemBuilder.of(Material.PAPER).name(lang.getMessage("GUI.kit-selector.buttons.previous-page.name")).build());
-        gui.setNextButton(ItemBuilder.of(Material.PAPER).name(lang.getMessage("GUI.kit-selector.buttons.next-page.name")).build());
-        gui.setEmptyIndicator(ItemBuilder.of(Material.PAPER).name(lang.getMessage("GUI.kit-selector.buttons.empty.name")).build());
+        gui = new CustomKitGui(plugin, lang.getMessage("GUI.kit-selector.title"), config.getKitSelectorRows(), kits.values());
+        setupCustomLayout();
         plugin.getGuiListener().addGui(gui);
 
         if (FileUtil.checkNonEmpty(file, true)) {
@@ -83,6 +79,23 @@ public class KitManagerImpl implements Loadable, KitManager {
 
         DuelsPlugin.sendMessage(String.format(KITS_LOADED, kits.size()));
         gui.calculatePages();
+    }
+
+    private void setupCustomLayout() {
+        final ItemStack glassPane = Items.from(config.getKitSelectorFillerType(), config.getKitSelectorFillerData());
+
+        for (int i = 0; i < 9; i++) {
+            gui.setStaticItem(i, glassPane);
+        }
+
+        gui.setStaticItem(9, glassPane);
+        gui.setStaticItem(10, glassPane);
+        gui.setStaticItem(16, glassPane);
+        gui.setStaticItem(17, glassPane);
+
+        for (int i = 18; i < 27; i++) {
+            gui.setStaticItem(i, glassPane);
+        }
     }
 
     @Override
@@ -177,7 +190,7 @@ public class KitManagerImpl implements Loadable, KitManager {
         final List<String> names = new ArrayList<>(kits.keySet());
 
         if (nokit) {
-            names.add("-"); // Special case: Change the nokit rating
+            names.add("-");
         }
 
         return names;

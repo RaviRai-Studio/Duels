@@ -4,9 +4,11 @@ import com.meteordevelopments.duels.DuelsPlugin;
 import com.meteordevelopments.duels.config.Config;
 import com.meteordevelopments.duels.gui.BaseButton;
 import com.meteordevelopments.duels.gui.settings.buttons.*;
+import com.meteordevelopments.duels.setting.Settings;
 import com.meteordevelopments.duels.util.compat.Items;
 import com.meteordevelopments.duels.util.gui.SinglePageGui;
 import com.meteordevelopments.duels.util.inventory.Slots;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -15,10 +17,10 @@ import java.util.List;
 public class SettingsGui extends SinglePageGui<DuelsPlugin> {
 
     private static final int[][] PATTERNS = {
-            {13},
-            {12, 14},
-            {12, 13, 14},
-            {12, 13, 14, 22}
+        {13},
+        {12, 14},
+        {12, 13, 14},
+        {12, 13, 14, 22}
     };
 
     public SettingsGui(final DuelsPlugin plugin) {
@@ -58,5 +60,22 @@ public class SettingsGui extends SinglePageGui<DuelsPlugin> {
 
         set(0, 2, 3, new RequestSendButton(plugin));
         set(7, 9, 3, new CancelButton(plugin));
+    }
+
+    public void open(final Player player) {
+        final Config config = plugin.getConfiguration();
+
+        if (config.isSkipRequestSettings()) {
+            final Settings settings = plugin.getSettingManager().getSafely(player);
+            final RequestSendButton sendButton = new RequestSendButton(plugin);
+            sendButton.sendDirectRequest(player);
+            return;
+        }
+
+        super.open(player);
+    }
+
+    public static boolean shouldSkipSettings(final DuelsPlugin plugin) {
+        return plugin.getConfiguration().isSkipRequestSettings();
     }
 }

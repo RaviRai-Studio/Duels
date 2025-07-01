@@ -27,7 +27,6 @@ import com.meteordevelopments.duels.util.Loadable;
 import com.meteordevelopments.duels.util.Log;
 import com.meteordevelopments.duels.util.NumberUtil;
 import com.meteordevelopments.duels.util.compat.Items;
-import com.meteordevelopments.duels.util.gui.MultiPageGui;
 import com.meteordevelopments.duels.util.inventory.InventoryUtil;
 import com.meteordevelopments.duels.util.inventory.ItemBuilder;
 import com.meteordevelopments.duels.util.io.FileUtil;
@@ -41,6 +40,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import space.arim.morepaperlib.scheduling.ScheduledTask;
@@ -53,7 +53,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class QueueManager implements Loadable, DQueueManager, Listener {
 
     private static final String FILE_NAME = "queues.json";
-
     private static final String QUEUES_LOADED = "&2Loaded %s queue(s).";
 
     private final DuelsPlugin plugin;
@@ -77,7 +76,7 @@ public class QueueManager implements Loadable, DQueueManager, Listener {
     private ScheduledTask queueTask;
 
     @Getter
-    private MultiPageGui<DuelsPlugin> gui;
+    private CustomQueueGui gui;
 
     public QueueManager(final DuelsPlugin plugin) {
         this.plugin = plugin;
@@ -111,11 +110,8 @@ public class QueueManager implements Loadable, DQueueManager, Listener {
 
     @Override
     public void handleLoad() throws IOException {
-        this.gui = new MultiPageGui<>(plugin, lang.getMessage("GUI.queues.title"), config.getQueuesRows(), queues);
-        gui.setSpaceFiller(Items.from(config.getQueuesFillerType(), config.getQueuesFillerData()));
-        gui.setPrevButton(ItemBuilder.of(Material.PAPER).name(lang.getMessage("GUI.queues.buttons.previous-page.name")).build());
-        gui.setNextButton(ItemBuilder.of(Material.PAPER).name(lang.getMessage("GUI.queues.buttons.next-page.name")).build());
-        gui.setEmptyIndicator(ItemBuilder.of(Material.PAPER).name(lang.getMessage("GUI.queues.buttons.empty.name")).build());
+        this.gui = new CustomQueueGui(plugin, lang.getMessage("GUI.queues.title"), config.getQueuesRows(), queues);
+        setupCustomLayout();
         plugin.getGuiListener().addGui(gui);
 
         if (FileUtil.checkNonEmpty(file, true)) {
@@ -151,7 +147,6 @@ public class QueueManager implements Loadable, DQueueManager, Listener {
                 final Set<QueueEntry> remove = new HashSet<>();
 
                 for (final QueueEntry current : queue.getPlayers()) {
-                    // player is already in a match
                     if (remove.contains(current)) {
                         continue;
                     }
@@ -161,7 +156,6 @@ public class QueueManager implements Loadable, DQueueManager, Listener {
                     for (final QueueEntry opponent : queue.getPlayers()) {
                         final Player other = opponent.getPlayer();
 
-                        // opponent is already in a match or the rating difference is too high
                         if (current.equals(opponent) || remove.contains(opponent) || !canFight(queue.getKit(), userManager.get(player), userManager.get(other))) {
                             continue;
                         }
@@ -181,7 +175,6 @@ public class QueueManager implements Loadable, DQueueManager, Listener {
                         setting.getCache().put(player.getUniqueId(), current.getInfo());
                         setting.getCache().put(other.getUniqueId(), opponent.getInfo());
 
-                        // Ensure party info is set to avoid NPE in DuelManager
                         setting.setSenderParty(plugin.getPartyManager().get(player));
                         setting.setTargetParty(plugin.getPartyManager().get(other));
 
@@ -202,6 +195,23 @@ public class QueueManager implements Loadable, DQueueManager, Listener {
                 gui.calculatePages();
             }
         }, 20L, 40L);
+    }
+
+    private void setupCustomLayout() {
+        final ItemStack glassPane = Items.from(config.getQueuesFillerType(), config.getQueuesFillerData());
+
+        for (int i = 0; i < 9; i++) {
+            gui.setStaticItem(i, glassPane);
+        }
+
+        gui.setStaticItem(9, glassPane);
+        gui.setStaticItem(10, glassPane);
+        gui.setStaticItem(16, glassPane);
+        gui.setStaticItem(17, glassPane);
+
+        for (int i = 18; i < 27; i++) {
+            gui.setStaticItem(i, glassPane);
+        }
     }
 
     @Override
@@ -361,9 +371,9 @@ public class QueueManager implements Loadable, DQueueManager, Listener {
         }
 
         if ((combatTagPlus != null && combatTagPlus.isTagged(player))
-                || (pvpManager != null && pvpManager.isTagged(player))
-                || (deluxeCombat != null && deluxeCombat.isTagged(player))
-                || (combatLogX != null && combatLogX.isTagged(player))) {
+            || (pvpManager != null && pvpManager.isTagged(player))
+            || (deluxeCombat != null && deluxeCombat.isTagged(player))
+            || (combatLogX != null && combatLogX.isTagged(player))) {
             lang.sendMessage(player, "ERROR.duel.is-tagged");
             return false;
         }

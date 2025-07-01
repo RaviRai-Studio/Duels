@@ -97,34 +97,73 @@ public class PlayerInfoManager implements Loadable {
 
     @Override
     public void handleUnload() throws IOException {
-        Bukkit.getOnlinePlayers().stream().filter(Player::isDead).forEach(player -> {
-            final PlayerInfo info = remove(player);
+        try {
+            Bukkit.getOnlinePlayers().stream().filter(Player::isDead).forEach(player -> {
+                try {
+                    final PlayerInfo info = remove(player);
 
-            if (info != null) {
-                player.spigot().respawn();
-                teleport.tryTeleport(player, info.getLocation());
-                PlayerUtil.reset(player);
-                info.restore(player);
-            }
-        });
+                    if (info != null) {
+                        try {
+                            player.spigot().respawn();
+                        } catch (Exception e) {
+                            Log.error(this, "Failed to respawn player during unload: " + player.getName(), e);
+                        }
+
+                        try {
+                            if (teleport != null) {
+                                teleport.tryTeleport(player, info.getLocation());
+                            }
+                        } catch (Exception e) {
+                            Log.error(this, "Failed to teleport player during unload: " + player.getName(), e);
+                        }
+
+                        try {
+                            PlayerUtil.reset(player);
+                        } catch (Exception e) {
+                            Log.error(this, "Failed to reset player during unload: " + player.getName(), e);
+                        }
+
+                        try {
+                            info.restore(player);
+                        } catch (Exception e) {
+                            Log.error(this, "Failed to restore player info during unload: " + player.getName(), e);
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.error(this, "Error processing dead player during unload: " + player.getName(), e);
+                }
+            });
+        } catch (Exception e) {
+            Log.error(this, "Error processing dead players during unload", e);
+        }
 
         if (cache.isEmpty()) {
             return;
         }
 
-        Map<UUID, PlayerData> data = new HashMap<>();
+        try {
+            Map<UUID, PlayerData> data = new HashMap<>();
 
-        for (final Map.Entry<UUID, PlayerInfo> entry : cache.entrySet()) {
-            data.put(entry.getKey(), PlayerData.fromPlayerInfo(entry.getValue()));
+            for (final Map.Entry<UUID, PlayerInfo> entry : cache.entrySet()) {
+                try {
+                    data.put(entry.getKey(), PlayerData.fromPlayerInfo(entry.getValue()));
+                } catch (Exception e) {
+                    Log.error(this, "Failed to convert PlayerInfo to PlayerData for UUID: " + entry.getKey(), e);
+                }
+            }
+
+            if (!data.isEmpty()) {
+                try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(cacheFile.toPath()), Charsets.UTF_8)) {
+                    Yaml yaml = new Yaml();
+                    yaml.dump(data, writer);
+                    writer.flush();
+                }
+            }
+        } catch (Exception e) {
+            Log.error(this, "Failed to save player cache during unload", e);
+        } finally {
+            cache.clear();
         }
-
-        try (final Writer writer = new OutputStreamWriter(Files.newOutputStream(cacheFile.toPath()), Charsets.UTF_8)) {
-            Yaml yaml = new Yaml();
-            yaml.dump(data, writer);
-            writer.flush();
-        }
-
-        cache.clear();
     }
 
     public boolean setLobby(final Player player) {
@@ -181,12 +220,20 @@ public class PlayerInfoManager implements Loadable {
 
             plugin.doSyncAfter(() -> {
                 if (player.isOnline()) {
-                    teleport.tryTeleport(player, info.getLocation());
-                    DuelsPlugin.getMorePaperLib().scheduling().entitySpecificScheduler(player).runDelayed(() -> {
-                        if (player.isOnline()) {
-                            info.restore(player);
-                        }
-                    }, null, 5L);
+                    try {
+                        teleport.tryTeleport(player, info.getLocation());
+                        DuelsPlugin.getMorePaperLib().scheduling().entitySpecificScheduler(player).runDelayed(() -> {
+                            if (player.isOnline()) {
+                                try {
+                                    info.restore(player);
+                                } catch (Exception e) {
+                                    Log.error((Loadable) this, "Failed to restore player info on join: " + player.getName(), e);
+                                }
+                            }
+                        }, null, 5L);
+                    } catch (Exception e) {
+                        Log.error((Loadable) this, "Failed to handle player join: " + player.getName(), e);
+                    }
                 }
             }, 5L);
         }
@@ -200,24 +247,32 @@ public class PlayerInfoManager implements Loadable {
                 return;
             }
 
-            event.setRespawnLocation(info.getLocation());
+            try {
+                event.setRespawnLocation(info.getLocation());
 
-            if (essentials != null) {
-                essentials.setBackLocation(player, event.getRespawnLocation());
-            }
-
-            plugin.doSyncAfter(() -> {
-                if (!player.isOnline()) {
-                    return;
+                if (essentials != null) {
+                    essentials.setBackLocation(player, event.getRespawnLocation());
                 }
 
-                remove(player);
-                DuelsPlugin.getMorePaperLib().scheduling().entitySpecificScheduler(player).run(() -> {
-                    if (player.isOnline()) {
-                        info.restore(player);
+                plugin.doSyncAfter(() -> {
+                    if (!player.isOnline()) {
+                        return;
                     }
-                }, null);
-            }, 1L);
+
+                    remove(player);
+                    DuelsPlugin.getMorePaperLib().scheduling().entitySpecificScheduler(player).run(() -> {
+                        if (player.isOnline()) {
+                            try {
+                                info.restore(player);
+                            } catch (Exception e) {
+                                Log.error((Loadable) this, "Failed to restore player info on respawn: " + player.getName(), e);
+                            }
+                        }
+                    }, null);
+                }, 1L);
+            } catch (Exception e) {
+                Log.error((Loadable) this, "Failed to handle player respawn: " + player.getName(), e);
+            }
         }
     }
 }

@@ -37,12 +37,13 @@ public class KitImpl extends BaseButton implements Kit {
     private boolean removed;
 
     public KitImpl(final DuelsPlugin plugin, final String name, final ItemStack displayed, final boolean usePermission,
-                   final boolean arenaSpecific, final Set<Characteristic> characteristics) {
+        final boolean arenaSpecific, final Set<Characteristic> characteristics) {
         super(plugin, displayed != null ? displayed : ItemBuilder
-                .of(Material.DIAMOND_SWORD)
-                .name("&7&l" + name)
-                .lore("&aClick to send", "&aa duel request", "&awith this kit!")
-                .build());
+            .of(Material.DIAMOND_SWORD)
+            .name("&7&l" + name)
+            .lore("&aClick to send", "&aa duel request", "&awith this kit!")
+            .hideAttributes()
+            .build());
         this.name = name;
         this.usePermission = usePermission;
         this.arenaSpecific = arenaSpecific;
@@ -54,7 +55,6 @@ public class KitImpl extends BaseButton implements Kit {
         InventoryUtil.addToMap(inventory, items);
     }
 
-    // Never-null since if null item is passed to the constructor, a default item is passed to super
     @NotNull
     public ItemStack getDisplayed() {
         return super.getDisplayed();
@@ -62,7 +62,11 @@ public class KitImpl extends BaseButton implements Kit {
 
     @Override
     public void setDisplayed(final ItemStack displayed) {
-        super.setDisplayed(displayed);
+        ItemStack processedItem = displayed;
+        if (displayed != null) {
+            processedItem = ItemBuilder.of(displayed.clone()).hideAttributes().build();
+        }
+        super.setDisplayed(processedItem);
         kitManager.saveKits();
     }
 
@@ -102,8 +106,27 @@ public class KitImpl extends BaseButton implements Kit {
         }
 
         InventoryUtil.fillFromMap(player.getInventory(), items);
+        hideItemAttributes(player.getInventory());
         player.updateInventory();
         return true;
+    }
+
+    private void hideItemAttributes(PlayerInventory inventory) {
+        for (int i = 0; i < inventory.getSize(); i++) {
+            ItemStack item = inventory.getItem(i);
+            if (item != null && item.getType() != Material.AIR) {
+                ItemStack processedItem = ItemBuilder.of(item.clone()).hideAttributes().build();
+                inventory.setItem(i, processedItem);
+            }
+        }
+
+        ItemStack[] armorContents = inventory.getArmorContents();
+        for (int i = 0; i < armorContents.length; i++) {
+            if (armorContents[i] != null && armorContents[i].getType() != Material.AIR) {
+                armorContents[i] = ItemBuilder.of(armorContents[i].clone()).hideAttributes().build();
+            }
+        }
+        inventory.setArmorContents(armorContents);
     }
 
     @Override
@@ -117,7 +140,6 @@ public class KitImpl extends BaseButton implements Kit {
 
         final Settings settings = settingManager.getSafely(player);
 
-        // Reset arena selection if this kit is incompatible with selected arena
         if (settings.getArena() != null && !arenaManager.isSelectable(this, settings.getArena())) {
             settings.setArena(null);
         }

@@ -5,6 +5,7 @@ import com.meteordevelopments.duels.command.commands.party.PartyCommand;
 import com.meteordevelopments.duels.listeners.*;
 import com.meteordevelopments.duels.party.PartyManagerImpl;
 import com.meteordevelopments.duels.util.*;
+import com.meteordevelopments.duels.util.inventory.ItemBuilder;
 import com.meteordevelopments.duels.util.util.CC;
 import com.meteordevelopments.duels.validator.ValidatorManager;
 import lombok.Getter;
@@ -123,6 +124,7 @@ public class DuelsPlugin extends JavaPlugin implements Duels, LogSource {
         morePaperLib = new MorePaperLib(this);
         Log.addSource(this);
         JsonUtil.registerDeserializer(ItemData.class, ItemDataDeserializer.class);
+        ItemBuilder.setPlugin(this);
 
         sendBanner();
 

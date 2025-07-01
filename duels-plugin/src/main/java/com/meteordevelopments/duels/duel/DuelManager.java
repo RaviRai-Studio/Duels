@@ -69,6 +69,7 @@ public class DuelManager implements Loadable {
     private MyPetHook myPet;
 
     private ScheduledTask durationCheckTask;
+    private ScheduledTask healthDisplayTask;
 
     public DuelManager(final DuelsPlugin plugin) {
         this.plugin = plugin;
@@ -167,12 +168,37 @@ public class DuelManager implements Loadable {
                 }
             }, 1L, 20L);
         }
+
+        if (config.isHealthDisplayEnabled()) {
+            this.healthDisplayTask = plugin.doSyncRepeat(() -> {
+                for (final ArenaImpl arena : arenaManager.getArenasImpl()) {
+                    final DuelMatch match = arena.getMatch();
+
+                    if (match == null || arena.isEndGame()) {
+                        continue;
+                    }
+
+                    final Set<Player> players = match.getAlivePlayers();
+                    for (final Player player : players) {
+                        for (final Player opponent : players) {
+                            if (!player.equals(opponent)) {
+                                sendHealthDisplay(player, opponent);
+                            }
+                        }
+                    }
+                }
+            }, 1L, config.getHealthDisplayUpdateInterval());
+        }
     }
 
     @Override
     public void handleUnload() {
         if (config.getMaxDuration() > 0) {
             plugin.cancelTask(durationCheckTask);
+        }
+
+        if (config.isHealthDisplayEnabled()) {
+            plugin.cancelTask(healthDisplayTask);
         }
 
         for (final ArenaImpl arena : arenaManager.getArenasImpl()) {
@@ -406,6 +432,24 @@ public class DuelManager implements Loadable {
         }
     }
 
+    private void sendHealthDisplay(final Player viewer, final Player target) {
+        if (!config.isHealthDisplayEnabled() || viewer == null || target == null || !viewer.isOnline() || !target.isOnline()) {
+            return;
+        }
+
+        final int health = (int) Math.ceil(target.getHealth());
+        final String message = lang.getMessage("DUEL.health-display", "name", target.getName(), "health", health);
+
+        if (message != null) {
+            try {
+                viewer.sendActionBar(message);
+            } catch (Exception ex) {
+                viewer.spigot().sendMessage(net.md_5.bungee.api.ChatMessageType.ACTION_BAR,
+                    net.md_5.bungee.api.chat.TextComponent.fromLegacyText(message));
+            }
+        }
+    }
+
     private class DuelListener implements Listener {
 
         @EventHandler(priority = EventPriority.HIGHEST)
@@ -455,7 +499,7 @@ public class DuelManager implements Loadable {
                 final Player killer = player.getKiller();
 
                 if (killer != null) {
-                    final double health = Math.ceil(killer.getHealth()) * 0.5;
+                    final int health = (int) Math.ceil(killer.getHealth());
                     arena.broadcast(lang.getMessage("DUEL.on-death.with-killer", "name", player.getName(), "killer", killer.getName(), "health", health));
                 } else {
                     arena.broadcast(lang.getMessage("DUEL.on-death.no-killer", "name", player.getName()));

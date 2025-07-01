@@ -361,16 +361,7 @@ public class UserManagerImpl implements Loadable, Listener, UserManager {
                     loserData.setRating(kit, loserRating = loserRating - change);
                 }
 
-                message = lang.getMessage("DUEL.on-end.opponent-defeat",
-                        "winner", winner.getName(),
-                        "loser", loser.getName(),
-                        "health", matchData.getHealth(),
-                        "kit", kitName,
-                        "arena", match.getArena().getName(),
-                        "winner_rating", winnerRating,
-                        "loser_rating", loserRating,
-                        "change", change
-                );
+                message = null;
             } else {
                 message = null;
             }
@@ -379,10 +370,10 @@ public class UserManagerImpl implements Loadable, Listener, UserManager {
             final Party winnerParty = partyMatch.getPlayerToParty().get(winner);
             final Party loserParty = match.getArena().getOpponent(winnerParty);
             message = lang.getMessage("DUEL.on-end.party-opponent-defeat",
-                    "winners", StringUtil.join(partyMatch.getNames(winnerParty), ", "),
-                    "losers", StringUtil.join(partyMatch.getNames(loserParty), ", "),
-                    "kit", kitName,
-                    "arena", match.getArena().getName()
+                "winners", StringUtil.join(partyMatch.getNames(winnerParty), ", "),
+                "losers", StringUtil.join(partyMatch.getNames(loserParty), ", "),
+                "kit", kitName,
+                "arena", match.getArena().getName()
             );
         }
 

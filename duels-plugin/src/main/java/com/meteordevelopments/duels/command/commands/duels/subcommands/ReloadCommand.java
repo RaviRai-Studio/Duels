@@ -20,38 +20,64 @@ public class ReloadCommand extends BaseCommand {
 
     @Override
     protected void execute(final CommandSender sender, final String label, final String[] args) {
-        if (args.length > getLength()) {
-            final Loadable target = plugin.find(args[1]);
+        try {
+            if (args.length > getLength()) {
+                final String targetName = args[1];
+                final Loadable target = plugin.find(targetName);
 
-            if (!(target instanceof Reloadable)) {
-                sender.sendMessage(ChatColor.RED + "Invalid module. The following modules are available for a reload: " + StringUtil.join(plugin.getReloadables(), ", "));
+                if (target == null) {
+                    sender.sendMessage(ChatColor.RED + "Module '" + targetName + "' not found. The following modules are available for a reload: " + StringUtil.join(plugin.getReloadables(), ", "));
+                    return;
+                }
+
+                if (!(target instanceof Reloadable)) {
+                    sender.sendMessage(ChatColor.RED + "Module '" + targetName + "' is not reloadable. The following modules are available for a reload: " + StringUtil.join(plugin.getReloadables(), ", "));
+                    return;
+                }
+
+                final String name = target.getClass().getSimpleName();
+
+                try {
+                    if (plugin.reload(target)) {
+                        sender.sendMessage(ChatColor.GREEN + "[" + plugin.getDescription().getFullName() + "] Successfully reloaded " + name + ".");
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "An error occurred while reloading " + name + "! Please check the console for more information.");
+                    }
+                } catch (Exception e) {
+                    sender.sendMessage(ChatColor.RED + "An error occurred while reloading " + name + "! Please check the console for more information.");
+                    e.printStackTrace();
+                }
+
                 return;
             }
 
-            final String name = target.getClass().getSimpleName();
-
-            if (plugin.reload(target)) {
-                sender.sendMessage(ChatColor.GREEN + "[" + plugin.getDescription().getFullName() + "] Successfully reloaded " + name + ".");
-            } else {
-                sender.sendMessage(ChatColor.RED + "An error occured while reloading " + name + "! Please check the console for more information.");
+            try {
+                if (plugin.reload()) {
+                    sender.sendMessage(ChatColor.GREEN + "[" + plugin.getDescription().getFullName() + "] Reload complete.");
+                } else {
+                    sender.sendMessage(ChatColor.RED + "An error occurred while reloading the plugin! Please check the console for more information.");
+                }
+            } catch (Exception e) {
+                sender.sendMessage(ChatColor.RED + "An error occurred while reloading the plugin! Please check the console for more information.");
+                e.printStackTrace();
             }
-
-            return;
-        }
-
-        if (plugin.reload()) {
-            sender.sendMessage(ChatColor.GREEN + "[" + plugin.getDescription().getFullName() + "] Reload complete.");
-        } else {
-            sender.sendMessage(ChatColor.RED + "An error occured while reloading the plugin! Please check the console for more information.");
+        } catch (Exception e) {
+            sender.sendMessage(ChatColor.RED + "An unexpected error occurred during reload! Please check the console for more information.");
+            e.printStackTrace();
         }
     }
 
     @Override
     public List<String> onTabComplete(final CommandSender sender, final Command command, final String alias, final String[] args) {
-        if (args.length == 2) {
-            return plugin.getReloadables().stream()
-                    .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+        try {
+            if (args.length == 2) {
+                final String input = args[1].toLowerCase();
+                return plugin.getReloadables().stream()
+                    .filter(name -> name.toLowerCase().startsWith(input))
                     .collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return null;

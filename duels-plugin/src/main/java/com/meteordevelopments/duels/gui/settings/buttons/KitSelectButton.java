@@ -5,6 +5,7 @@ import com.meteordevelopments.duels.Permissions;
 import com.meteordevelopments.duels.gui.BaseButton;
 import com.meteordevelopments.duels.setting.Settings;
 import com.meteordevelopments.duels.util.inventory.ItemBuilder;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -34,6 +35,34 @@ public class KitSelectButton extends BaseButton {
             return;
         }
 
-        kitManager.getGui().open(player);
+        final Settings settings = settingManager.getSafely(player);
+
+        if (config.isSkipRequestSettings()) {
+            if (settings.getTarget() == null) {
+                settings.reset();
+                player.closeInventory();
+                return;
+            }
+
+            final Player target = Bukkit.getPlayer(settings.getTarget());
+
+            if (target == null) {
+                settings.reset();
+                player.closeInventory();
+                lang.sendMessage(player, "ERROR.player.no-longer-online");
+                return;
+            }
+
+            if (!settings.isOwnInventory() && settings.getKit() == null) {
+                player.closeInventory();
+                lang.sendMessage(player, "ERROR.duel.mode-unselected");
+                return;
+            }
+
+            player.closeInventory();
+            requestManager.send(player, target, settings);
+        } else {
+            kitManager.getGui().open(player);
+        }
     }
 }

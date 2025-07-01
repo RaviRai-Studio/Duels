@@ -3,6 +3,7 @@ dependencies {
     implementation 'org.spigotmc:spigot-api:1.14.4-R0.1-SNAPSHOT'
     implementation('io.papermc:paperlib:1.0.8')
     implementation('space.arim.morepaperlib:morepaperlib:0.4.4')
+    compileOnly files('libs/mcfUltraKITS-2.3-all.jar')
 }
 
 java {

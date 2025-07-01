@@ -75,6 +75,8 @@ public class Config extends AbstractConfiguration<DuelsPlugin> {
     @Getter
     private boolean preventCreativeMode;
     @Getter
+    private boolean skipRequestSettings;
+    @Getter
     private boolean ownInventoryEnabled;
     @Getter
     private boolean ownInventoryDropInventoryItems;
@@ -283,6 +285,104 @@ public class Config extends AbstractConfiguration<DuelsPlugin> {
     @Getter
     private String noOpponent;
 
+    @Getter
+    private String queueGuiTitle;
+    @Getter
+    private List<Integer> queueFillerSlots;
+    @Getter
+    private List<Integer> queueSlots;
+    @Getter
+    private Map<Integer, int[]> queuePatterns;
+    @Getter
+    private boolean queueRefreshButtonEnabled;
+    @Getter
+    private int queueRefreshButtonSlot;
+    @Getter
+    private String queueRefreshButtonType;
+    @Getter
+    private short queueRefreshButtonData;
+    @Getter
+    private String queueRefreshButtonName;
+    @Getter
+    private List<String> queueRefreshButtonLore;
+    @Getter
+    private boolean queueJoinAllButtonEnabled;
+    @Getter
+    private int queueJoinAllButtonSlot;
+    @Getter
+    private String queueJoinAllButtonType;
+    @Getter
+    private short queueJoinAllButtonData;
+    @Getter
+    private String queueJoinAllButtonName;
+    @Getter
+    private List<String> queueJoinAllButtonLore;
+    @Getter
+    private boolean queueLeaveAllButtonEnabled;
+    @Getter
+    private int queueLeaveAllButtonSlot;
+    @Getter
+    private String queueLeaveAllButtonType;
+    @Getter
+    private short queueLeaveAllButtonData;
+    @Getter
+    private String queueLeaveAllButtonName;
+    @Getter
+    private List<String> queueLeaveAllButtonLore;
+    @Getter
+    private boolean queueBackButtonEnabled;
+    @Getter
+    private int queueBackButtonSlot;
+    @Getter
+    private String queueBackButtonType;
+    @Getter
+    private short queueBackButtonData;
+    @Getter
+    private String queueBackButtonName;
+    @Getter
+    private List<String> queueBackButtonLore;
+    @Getter
+    private boolean queueCloseButtonEnabled;
+    @Getter
+    private int queueCloseButtonSlot;
+    @Getter
+    private String queueCloseButtonType;
+    @Getter
+    private short queueCloseButtonData;
+    @Getter
+    private String queueCloseButtonName;
+    @Getter
+    private List<String> queueCloseButtonLore;
+    @Getter
+    private String queueInQueueItemType;
+    @Getter
+    private short queueInQueueItemData;
+    @Getter
+    private String queueInQueueItemName;
+    @Getter
+    private List<String> queueInQueueItemLore;
+    @Getter
+    private String queueNotInQueueItemType;
+    @Getter
+    private short queueNotInQueueItemData;
+    @Getter
+    private String queueNotInQueueItemName;
+    @Getter
+    private List<String> queueNotInQueueItemLore;
+    @Getter
+    private String queueFullItemType;
+    @Getter
+    private short queueFullItemData;
+    @Getter
+    private String queueFullItemName;
+    @Getter
+    private List<String> queueFullItemLore;
+
+    @Getter
+    private boolean healthDisplayEnabled;
+    @Getter
+    private int healthDisplayUpdateInterval;
+
     private final Multimap<String, MessageSound> messageToSounds = HashMultimap.create();
 
     public Config(final DuelsPlugin plugin) {
@@ -302,11 +402,11 @@ public class Config extends AbstractConfiguration<DuelsPlugin> {
         version = configuration.getInt("config-version");
         checkForUpdates = configuration.getBoolean("check-for-updates", true);
 
-        userNotFound = configuration.getString("placeholders.user-not-found", "User not found");
-        notInMatch = configuration.getString("placeholders.not-in-match", "none");
-        durationFormat = configuration.getString("placeholders.duration-format", "mm:ss");
-        noKit = configuration.getString("placeholders.no-kit", "none");
-        noOpponent = configuration.getString("placeholders.no-opponent", "no opponent");
+        userNotFound = configuration.getString("user-not-found", "User not found");
+        notInMatch = configuration.getString("not-in-match", "none");
+        durationFormat = configuration.getString("duration-format", "mm:ss");
+        noKit = configuration.getString("no-kit", "none");
+        noOpponent = configuration.getString("no-opponent", "no opponent");
         ctpPreventDuel = configuration.getBoolean("supported-plugins.CombatTagPlus.prevent-duel-if-tagged", true);
         ctpPreventTag = configuration.getBoolean("supported-plugins.CombatTagPlus.prevent-tag-in-duel", true);
         pmPreventDuel = configuration.getBoolean("supported-plugins.PvPManager.prevent-duel-if-tagged", true);
@@ -334,6 +434,7 @@ public class Config extends AbstractConfiguration<DuelsPlugin> {
 
         requiresClearedInventory = configuration.getBoolean("request.requires-cleared-inventory", true);
         preventCreativeMode = configuration.getBoolean("request.prevent-creative-mode", false);
+        skipRequestSettings = configuration.getBoolean("request.skip-request-settings.enabled", false);
         ownInventoryEnabled = configuration.getBoolean("request.use-own-inventory.enabled", true);
         ownInventoryDropInventoryItems = configuration.getBoolean("request.use-own-inventory.drop-inventory-items", false);
         ownInventoryUsePermission = configuration.getBoolean("request.use-own-inventory.use-permission", false);
@@ -346,6 +447,8 @@ public class Config extends AbstractConfiguration<DuelsPlugin> {
         moneyBettingEnabled = configuration.getBoolean("request.money-betting.enabled", true);
         moneyBettingUsePermission = configuration.getBoolean("request.money-betting.use-permission", false);
         expiration = Math.max(configuration.getInt("request.expiration", 30), 0);
+        healthDisplayEnabled = configuration.getBoolean("health-display.enabled", true);
+        healthDisplayUpdateInterval = configuration.getInt("health-display.update-interval", 10);
 
         maxDuration = configuration.getInt("duel.match.max-duration", -1);
         startCommandsEnabled = configuration.getBoolean("duel.match.start-commands.enabled", false);
@@ -424,6 +527,69 @@ public class Config extends AbstractConfiguration<DuelsPlugin> {
         queuesFillerData = (short) configuration.getInt("guis.queues.space-filler-item.data", 0);
         inheritKitItemType = configuration.getBoolean("guis.queues.inherit-kit-item-type", true);
 
+        queueGuiTitle = configuration.getString("guis.queues.title", "&8Queue Selector");
+        queueFillerSlots = configuration.getIntegerList("guis.queues.layout.filler-slots");
+        queueSlots = configuration.getIntegerList("guis.queues.layout.queue-slots");
+
+        queuePatterns = new HashMap<>();
+        ConfigurationSection patternsSection = configuration.getConfigurationSection("guis.queues.patterns");
+        if (patternsSection != null) {
+            for (String key : patternsSection.getKeys(false)) {
+                List<Integer> pattern = patternsSection.getIntegerList(key);
+                queuePatterns.put(Integer.parseInt(key), pattern.stream().mapToInt(Integer::intValue).toArray());
+            }
+        }
+
+        queueRefreshButtonEnabled = configuration.getBoolean("guis.queues.buttons.refresh.enabled", true);
+        queueRefreshButtonSlot = configuration.getInt("guis.queues.buttons.refresh.slot", 4);
+        queueRefreshButtonType = configuration.getString("guis.queues.buttons.refresh.item.type", "EMERALD");
+        queueRefreshButtonData = (short) configuration.getInt("guis.queues.buttons.refresh.item.data", 0);
+        queueRefreshButtonName = configuration.getString("guis.queues.buttons.refresh.item.name", "&a&lRefresh Queues");
+        queueRefreshButtonLore = configuration.getStringList("guis.queues.buttons.refresh.item.lore");
+
+        queueJoinAllButtonEnabled = configuration.getBoolean("guis.queues.buttons.join-all.enabled", true);
+        queueJoinAllButtonSlot = configuration.getInt("guis.queues.buttons.join-all.slot", 22);
+        queueJoinAllButtonType = configuration.getString("guis.queues.buttons.join-all.item.type", "DIAMOND");
+        queueJoinAllButtonData = (short) configuration.getInt("guis.queues.buttons.join-all.item.data", 0);
+        queueJoinAllButtonName = configuration.getString("guis.queues.buttons.join-all.item.name", "&b&lJoin All Queues");
+        queueJoinAllButtonLore = configuration.getStringList("guis.queues.buttons.join-all.item.lore");
+
+        queueLeaveAllButtonEnabled = configuration.getBoolean("guis.queues.buttons.leave-all.enabled", true);
+        queueLeaveAllButtonSlot = configuration.getInt("guis.queues.buttons.leave-all.slot", 24);
+        queueLeaveAllButtonType = configuration.getString("guis.queues.buttons.leave-all.item.type", "REDSTONE");
+        queueLeaveAllButtonData = (short) configuration.getInt("guis.queues.buttons.leave-all.item.data", 0);
+        queueLeaveAllButtonName = configuration.getString("guis.queues.buttons.leave-all.item.name", "&c&lLeave All Queues");
+        queueLeaveAllButtonLore = configuration.getStringList("guis.queues.buttons.leave-all.item.lore");
+
+        queueBackButtonEnabled = configuration.getBoolean("guis.queues.buttons.back.enabled", true);
+        queueBackButtonSlot = configuration.getInt("guis.queues.buttons.back.slot", 18);
+        queueBackButtonType = configuration.getString("guis.queues.buttons.back.item.type", "ARROW");
+        queueBackButtonData = (short) configuration.getInt("guis.queues.buttons.back.item.data", 0);
+        queueBackButtonName = configuration.getString("guis.queues.buttons.back.item.name", "&7« Back");
+        queueBackButtonLore = configuration.getStringList("guis.queues.buttons.back.item.lore");
+
+        queueCloseButtonEnabled = configuration.getBoolean("guis.queues.buttons.close.enabled", true);
+        queueCloseButtonSlot = configuration.getInt("guis.queues.buttons.close.slot", 26);
+        queueCloseButtonType = configuration.getString("guis.queues.buttons.close.item.type", "BARRIER");
+        queueCloseButtonData = (short) configuration.getInt("guis.queues.buttons.close.item.data", 0);
+        queueCloseButtonName = configuration.getString("guis.queues.buttons.close.item.name", "&c&lClose");
+        queueCloseButtonLore = configuration.getStringList("guis.queues.buttons.close.item.lore");
+
+        queueInQueueItemType = configuration.getString("guis.queues.queue-item.in-queue.type", "LIME_STAINED_GLASS_PANE");
+        queueInQueueItemData = (short) configuration.getInt("guis.queues.queue-item.in-queue.data", 0);
+        queueInQueueItemName = configuration.getString("guis.queues.queue-item.in-queue.name", "&a&l{kit} Queue &7(In Queue)");
+        queueInQueueItemLore = configuration.getStringList("guis.queues.queue-item.in-queue.lore");
+
+        queueNotInQueueItemType = configuration.getString("guis.queues.queue-item.not-in-queue.type", "RED_STAINED_GLASS_PANE");
+        queueNotInQueueItemData = (short) configuration.getInt("guis.queues.queue-item.not-in-queue.data", 0);
+        queueNotInQueueItemName = configuration.getString("guis.queues.queue-item.not-in-queue.name", "&c&l{kit} Queue");
+        queueNotInQueueItemLore = configuration.getStringList("guis.queues.queue-item.not-in-queue.lore");
+
+        queueFullItemType = configuration.getString("guis.queues.queue-item.queue-full.type", "ORANGE_STAINED_GLASS_PANE");
+        queueFullItemData = (short) configuration.getInt("guis.queues.queue-item.queue-full.data", 0);
+        queueFullItemName = configuration.getString("guis.queues.queue-item.queue-full.name", "&6&l{kit} Queue &7(Full)");
+        queueFullItemLore = configuration.getStringList("guis.queues.queue-item.queue-full.lore");
+
         soupHeartsToRegen = Math.max(configuration.getDouble("soup.hearts-to-regen", 3.5), 0);
         soupRemoveEmptyBowl = configuration.getBoolean("soup.remove-empty-bowl", true);
         soupCancelIfAlreadyFull = configuration.getBoolean("soup.cancel-if-already-full", true);
@@ -465,8 +631,8 @@ public class Config extends AbstractConfiguration<DuelsPlugin> {
 
     public void playSound(final Player player, final String message) {
         sounds.values().stream()
-                .filter(sound -> sound.getMessages().contains(message))
-                .forEach(sound -> player.playSound(player.getLocation(), sound.getType(), sound.getVolume(), sound.getPitch()));
+            .filter(sound -> sound.getMessages().contains(message))
+            .forEach(sound -> player.playSound(player.getLocation(), sound.getType(), sound.getVolume(), sound.getPitch()));
     }
 
     public MessageSound getSound(final String name) {

@@ -109,6 +109,11 @@ supported-plugins:
         open-command: 'openlosses'
 
 
+health-display:
+  # Enable/disable health display on action bar during duels
+  enabled: true
+  update-interval: 10
+
 request:
   # If set to 'true', players will need to have a cleared inventory in order to send or accept a duel request.
   # default: false
@@ -117,6 +122,9 @@ request:
   # If set to 'true', players in creative mode will be prohibited from dueling.
   # default: false
   prevent-creative-mode: false
+
+  skip-request-settings:
+    enabled: true
 
   use-own-inventory:
     # If set to 'true', players will be able to choose to enable or disable own inventory duel through the Request Settings GUI.
